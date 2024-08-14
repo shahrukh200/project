@@ -9,12 +9,13 @@ terraform {
 
 
 
-  backend "azurerm" {
+ backend "azurerm" {
     resource_group_name  = "shahrukh_resource_group"
     storage_account_name = "storageaccountms0121"
-    container_name       = "backend-file"
+    container_name       = "backend-files"
     key                  = "spk1.tfstate"
-  }
+ 
+ }
 }
 provider "azurerm" {
     features {}
