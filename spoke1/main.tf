@@ -194,7 +194,7 @@ resource "azurerm_virtual_machine_extension" "vm-mount" {
 }
   SETTINGS
 
-  depends_on = [azurerm_windows_virtual_machine.VM]
+  depends_on = [azurerm_windows_virtual_machine.spk1vm]
    
 }
 
@@ -207,7 +207,7 @@ resource "azurerm_managed_disk" "data_disk" {
   storage_account_type = "Standard_LRS"
   create_option        = "Empty"
   disk_size_gb         = "4"
-  depends_on = [ azurerm_windows_virtual_machine.VM ]
+  depends_on = [ azurerm_windows_virtual_machine.spk1vm ]
 }
 
 # Attach the data disk to the virtual machine
@@ -228,7 +228,7 @@ data "azurerm_virtual_network" "Hub_vnet" {
 # Establish the Peering between Spoke_01 and Hub networks (Spoke_01 <--> Hub)
 resource "azurerm_virtual_network_peering" "spk1-To-Hub" {
   name                      = "Spk1-To-Hub"
-  resource_group_name       = azurerm_virtual_network.spk1vnet001["spk1venet001"].var.resource_group_name
+  resource_group_name       = azurerm_virtual_network.spk1vnet001["spk1venet001"].resource_group_name
   virtual_network_name      = azurerm_virtual_network.spk1vnet001["spk1venet001"].name
   remote_virtual_network_id = data.azurerm_virtual_network.Hub_vnet.id
   allow_virtual_network_access = true
@@ -248,7 +248,7 @@ resource "azurerm_virtual_network_peering" "Hub-Spk1" {
   allow_forwarded_traffic   = true
   allow_gateway_transit     = true
   use_remote_gateways       = false
-  depends_on = [ azurerm_virtual_network.spk1vnet001_vnet , data.azurerm_virtual_network.Hub_vnet ]
+  depends_on = [ azurerm_virtual_network.spk1vnet001 , data.azurerm_virtual_network.Hub_vnet ]
 }
 
 
