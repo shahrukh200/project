@@ -1,65 +1,3 @@
-# variable "resource_group_name" {
-#   type = string
-#   default = "spk1"
-# }
-
-# variable "resource_group_location" {
-#   type = string
-#   default = "uk south"
-# }
-
-# variable "virtual_network_name" {
-#     type = string
-#     default = "spk1vnet001"
-# }
-
-# variable "virtual_network_address_space" {
-#     type = string
-#     default = "10.3.0.0/16"
-# }
-
-# variable "subnet_details" {
-#     type = map(object({
-#       name = string
-#       address_prefix = string
-#     }))
-#     default = {
-#       "spk1-subnet001" = {
-#         name = "spk1-subnet001"
-#         address_prefix = "10.3.1.0/24"    //subnet1-nsg subnet-nsg
-#       },
-#       "spk1-subnet002" = {
-#         name = "spk1-subnet002"
-#         address_prefix = "10.3.2.0/24"   
-#       }
-
-#     }
-  
-# }
-
-# # variable "vm_count" {
-# #   type = number
-# #   default = 2
-# # }
-
-# # variable "availability_zones" {
-# #   type    = list(string)
-# #   default = ["1", "2"]
-# # }
-
-# variable "admin_username" {
-#   type = string
-#   default = "mohamed"
-# }
-
-# variable "admin_password" {
-#   type = string
-#   default = "mohamedas200"
-#   sensitive = true
-# }
-
-
-
 
 variable "resource_group_name" {
   type = string
@@ -94,7 +32,7 @@ variable "subnet_details" {
     subnet_name = string
     address_prefix=string
   }))
-  description = "subnet_detials"
+  description = "subnet_details"
   validation {
     condition = length(var.subnet_details)>0
     error_message = "at least two subnet must be provided"

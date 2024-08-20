@@ -126,10 +126,10 @@ resource "azurerm_application_gateway" "appgw" {
 
 # Fetch the data from key vault
 
-data "azurerm_key_vault" "keyvaultt001" {
-  name = "keyvault001"
-resource_group_name="spk2"
-}
+# data "azurerm_key_vault" "keyvaultt001" {
+#   name = "keyvault001"
+# resource_group_name="spk2"
+# }
 
 # Get the username from key vault secret store
 
@@ -140,42 +140,44 @@ resource_group_name="spk2"
 
   # Create windows Virtual Machine Scale Set (VMSS)
 
-  resource "azurerm_windows_virtual_machine_scale_set" "vmscaleset" {
-    name = "vmscaleset"
-    resource_group_name = azurerm_resource_group.spk2.name
-    location = azurerm_resource_group.spk2.location
-    sku = "standard_ds1-v2"
-    instances = 2
-    admin_username = data.azurerm_key_vault_secret.vm_admin_username.value
-    admin_password = data.azurerm_key_vault_secret.vm_admin_password.value
-    network_interface {
-      name = "vmss"
-      primary = true
-      ip_configuration {
-        name = "internal"
-        subnet_id = azurerm_subnet.subnet["vmss"].id
-        application_gateway_backend_address_pool_ids = [local.application_gateway_backend_address_pool_ids[0]]
-      }
-    }
-    os_disk {
-      caching = "readwrite"
-      storage_account_type = standard_lrs
-    }
-    source_image_reference {
-      publisher = "mswindowserver"
-      offer = "windowswrver"
-      sku = "2019-datacenter"
-      version = latest
-    }
-  }
+  # resource "azurerm_windows_virtual_machine_scale_set" "vmscaleset" {
+  #   name = "vmscaleset"
+  #   resource_group_name = azurerm_resource_group.spk2.name
+  #   location = azurerm_resource_group.spk2.location
+  #   sku = "standard_ds1-v2"
+  #   instances = 2
+  #   admin_username = data.azurerm_key_vault_secret.vm_admin_username.value
+  #   admin_password = data.azurerm_key_vault_secret.vm_admin_password.value
+  #   network_interface {
+  #     name = "vmss"
+  #     primary = true
+  #     ip_configuration {
+  #       name = "internal"
+  #       subnet_id = azurerm_subnet.subnet["vmss"].id
+  #       application_gateway_backend_address_pool_ids = [local.application_gateway_backend_address_pool_ids[0]]
+  #     }
+  #   }
+  #   os_disk {
+  #     caching = "readwrite"
+  #     storage_account_type = standard_lrs
+  #   }
+  #   source_image_reference {
+  #     publisher = "mswindowserver"
+  #     offer = "windowswrver"
+  #     sku = "2019-datacenter"
+  #     version = latest
+  #   }
+  # }
 
     
 
-    # Fetch the data from Hub Virtual Network for peering the Spoke_02 Virtual Network (Spk2<--> Hub)
-data "azurerm_virtual_network" "Hub_vnet" {
-  name = "Hubvnet"
-  resource_group_name = "spk2"
-}
+  # Hub Virtual Network for peering the Spoke_02 Virtual Network (Spk2<--> Hub)
+
+
+# data "azurerm_virtual_network" "Hub_vnet" {
+#   name = "Hubvnet"
+#   resource_group_name = "spk2"
+# }
 
 # Peering between Spoke_02 and Hub networks (Spk2 <--> Hub)
 # resource "azurerm_virtual_network_peering" "spk2" {

@@ -12,7 +12,7 @@ resource "azurerm_resource_group" "spk1" {
 
 resource "azurerm_virtual_network" "spk1vnet001" {
   for_each = var.virtual_network               
-    name = each.value.venet_name
+    name = each.key
     address_space = [each.value.address_space]
     resource_group_name = azurerm_resource_group.spk1.name
     location = azurerm_resource_group.spk1.location
@@ -25,7 +25,7 @@ resource "azurerm_subnet" "subnet" {
   for_each = var.subnet_details
   name = each.key
   address_prefixes = [each.value.address_prefix]
-  virtual_network_name = azurerm_virtual_network.spk1vnet001["spk1vnet001"].name
+  virtual_network_name = azurerm_virtual_network.spk1vnet001["vnet001"].name
   resource_group_name = azurerm_resource_group.spk1.name
   depends_on = [ azurerm_virtual_network.spk1vnet001]
 }
@@ -33,13 +33,13 @@ resource "azurerm_subnet" "subnet" {
 // Network Security Group => Nsg with rules
 
 resource "azurerm_network_security_group" "nsg" {
-  for_each = toset (local.subnet_names)
+  for_each = toset(local.subnet_names)
   name = each.key
   resource_group_name = azurerm_resource_group.spk1.name
   location = azurerm_resource_group.spk1.location
 
   dynamic "security_rule" {
-    for_each = {for rule in locals.rules_csv: rule.name => rule}
+    for_each = {for nsg in local.rules_csv: nsg.name => nsg}
     content {
       name = security_rule.value.name
       priority = security_rule.value.priority
@@ -96,12 +96,12 @@ resource "azurerm_key_vault" "Key_vault" {
     secret_permissions = [
       "Get",
       "Set",
-      "backup",
-      "delete",
-      "purge",
-      "list",
-      "recover",
-      "restore",
+      "Backup",
+      "Delete",
+      "Purge",
+      "List",
+      "Recover",
+      "Restore",
     ]
   }
   depends_on = [ azurerm_resource_group.spk1 ]
@@ -127,7 +127,8 @@ resource "azurerm_key_vault_secret" "vm_admin_password" {
 // virtual machine
 
 resource "azurerm_windows_virtual_machine" "spk1vm" {
-for_each = {for id, nic in azurerm_network_interface.subnet_nic : id => nic.id}
+
+for_each = {for id,nic in azurerm_network_interface.subnet_nic :id => nic.id}
   name                = "${azurerm_subnet.subnet[local.nsg_names[each.key]].name}-vm" 
   location            = azurerm_resource_group.spk1.location
   resource_group_name = azurerm_resource_group.spk1.name
@@ -155,16 +156,16 @@ for_each = {for id, nic in azurerm_network_interface.subnet_nic : id => nic.id}
 
 #   zone = var.availability_zones
 
-depends_on = [ azurerm_resource_group.spk1, azurerm_subnet.subnet, azurerm_network_interface.nic ]
+depends_on = [ azurerm_resource_group.spk1, azurerm_subnet.subnet, azurerm_network_interface.subnet_nic ]
 }
 
 // storage account file share
 
 resource "azurerm_storage_account" "stg-act" {
-  name                     = var.storage_account_name
+  name = var.storage_account_name
   resource_group_name = azurerm_resource_group.spk1.name
-  location                 = azurerm_resource_group.spk1.location
-  account_tier             = "Standard"
+  location = azurerm_resource_group.spk1.location
+  account_tier  = "Standard"
   account_replication_type = "LRS"
 
   depends_on = [ azurerm_resource_group.spk1 ]
@@ -173,7 +174,7 @@ resource "azurerm_storage_account" "stg-act" {
 //fileshare in storage account
 resource "azurerm_storage_share" "fileshare" {
   name                 = var.file_share_name
-  storage_account_name = azurerm_storage_account.stg-act
+  storage_account_name = azurerm_storage_account.stg-act.name
   quota                = 10
 
   depends_on = [ azurerm_resource_group.spk1, azurerm_storage_account.stg-act ]
@@ -183,7 +184,7 @@ resource "azurerm_storage_share" "fileshare" {
 
 resource "azurerm_virtual_machine_extension" "vm-mount" {
   name                 = "spk1-vm-extension"
-  virtual_machine_id   = azurerm_windows_virtual_machine.vm["sp01-subnet1"].id
+  virtual_machine_id   = azurerm_windows_virtual_machine.spk1vm["subnet001"].id
   publisher            = "Microsoft.Compute"
   type                 = "CustomScriptExtension"
   type_handler_version = "1.10"
@@ -213,46 +214,47 @@ resource "azurerm_managed_disk" "data_disk" {
 # Attach the data disk to the virtual machine
 resource "azurerm_virtual_machine_data_disk_attachment" "Attach" {
   managed_disk_id    = azurerm_managed_disk.data_disk.id
-  virtual_machine_id = azurerm_windows_virtual_machine.VM["vm1"].id
+  virtual_machine_id = azurerm_windows_virtual_machine.spk1vm["subnet001"].id
   lun                = 0
   caching            = "ReadWrite"
-  depends_on = [ azurerm_windows_virtual_machine.VM , azurerm_managed_disk.data_disk ]
+  depends_on = [ azurerm_windows_virtual_machine.spk1vm , azurerm_managed_disk.data_disk ]
 }
 
 # Fetch the data from Hub Virtual Network for peering the Spoke_01 Virtual Network (Spoke_01 <--> Hub)
-data "azurerm_virtual_network" "Hub_vnet" {
-  name = "Hub_vnet"
-  resource_group_name = "spk1"
-}
+# data "azurerm_virtual_network" "Hub_vnet" {
+#   name = "Hub_vnet"
+#   resource_group_name = "spk1"
+# }
 
-# Establish the Peering between Spoke_01 and Hub networks (Spoke_01 <--> Hub)
-resource "azurerm_virtual_network_peering" "spk1-To-Hub" {
-  name                      = "Spk1-To-Hub"
-  resource_group_name       = azurerm_virtual_network.spk1vnet001["spk1venet001"].resource_group_name
-  virtual_network_name      = azurerm_virtual_network.spk1vnet001["spk1venet001"].name
-  remote_virtual_network_id = data.azurerm_virtual_network.Hub_vnet.id
-  allow_virtual_network_access = true
-  allow_forwarded_traffic   = true
-  allow_gateway_transit     = false
-  use_remote_gateways       = false
-  depends_on = [ azurerm_virtual_network.spk1vnet001 , data.azurerm_virtual_network.Hub_vnet]
-}
+# # Establish the Peering between Spoke_01 and Hub networks (Spoke_01 <--> Hub)
+# resource "azurerm_virtual_network_peering" "spk1-To-Hub" {
+#   name                      = "Spk1-To-Hub"
+#   resource_group_name       = azurerm_virtual_network.spk1vnet001["spk1venet001"].resource_group_name
+#   virtual_network_name      = azurerm_virtual_network.spk1vnet001["spk1venet001"].name
+#   remote_virtual_network_id = data.azurerm_virtual_network.Hub_vnet.id
+#   allow_virtual_network_access = true
+#   allow_forwarded_traffic   = true
+#   allow_gateway_transit     = false
+#   use_remote_gateways       = false
+#   depends_on = [ azurerm_virtual_network.spk1vnet001 , data.azurerm_virtual_network.Hub_vnet]
+# }
 
-# Establish the Peering between and Hub Spoke_01 networks (Hub <--> Spoke_01)
-resource "azurerm_virtual_network_peering" "Hub-Spk1" {
-  name                      = "Hub-Spk1"
-  resource_group_name       = data.azurerm_virtual_network.Hub_vnet.resource_group_name
-  virtual_network_name      = data.azurerm_virtual_network.Hub_vnet.name
-  remote_virtual_network_id = azurerm_virtual_network.spk1vnet001["spk1venet001"].id
-  allow_virtual_network_access = true
-  allow_forwarded_traffic   = true
-  allow_gateway_transit     = true
-  use_remote_gateways       = false
-  depends_on = [ azurerm_virtual_network.spk1vnet001 , data.azurerm_virtual_network.Hub_vnet ]
-}
+# # Establish the Peering between and Hub Spoke_01 networks (Hub <--> Spoke_01)
+# resource "azurerm_virtual_network_peering" "Hub-Spk1" {
+#   name                      = "Hub-Spk1"
+#   resource_group_name       = data.azurerm_virtual_network.Hub_vnet.resource_group_name
+#   virtual_network_name      = data.azurerm_virtual_network.Hub_vnet.name
+#   remote_virtual_network_id = azurerm_virtual_network.spk1vnet001["spk1venet001"].id
+#   allow_virtual_network_access = true
+#   allow_forwarded_traffic   = true
+#   allow_gateway_transit     = true
+#   use_remote_gateways       = false
+#   depends_on = [ azurerm_virtual_network.spk1vnet001 , data.azurerm_virtual_network.Hub_vnet ]
+# }
 
 
 # Creates the policy definition
+
 # resource "azurerm_policy_definition" "rg_policy_def" {
 #   name         = "Spk1_rg-policy"
 #   policy_type  = "Custom"

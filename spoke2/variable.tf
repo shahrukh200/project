@@ -71,14 +71,15 @@ variable "resource_group_location" {
   type = string
   description = "location of the resource group"
   validation {
-    condition = length(var.resource_group_location)
+
+    condition = length (var.resource_group_location)>0
     error_message = "location must be provided"
   }
   
 }
 variable "vnet_details" {
-  type = map(object({
-    venet_name =string
+    type = map(object({
+    vnet_name =string
     address_prefix=string 
   }))
   description = "detials of the vnet"
@@ -102,12 +103,12 @@ variable "rules_file" {
 
 variable "admin_username" {
   type = string
-  default = "azureuser"
+  default = "adminuser"
   
 }
 variable "admin_password" {
   type = string
-  default = "mohamed123"
+  default = "mohamed@s200"
   sensitive = true
   
 }

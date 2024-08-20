@@ -1,4 +1,3 @@
-# 
 
 
 variable "resource_group_name" {
@@ -24,7 +23,7 @@ variable "vnet_details" {
     vnet_name = string
     address_space=string
   }))
-  description = "details of the snet"
+  description = "details of the vnet"
   
 }
 variable "subnet_details" {
@@ -46,6 +45,27 @@ variable "web_app_name" {
   default = "name of web app name"
   
 }
+
+variable "private_endpoint_name" {
+  type = string
+  description = "name of private endpoint name "
+}
+
+variable "private_dns_zone_name" {
+  type = string
+  description = "name of private dns zone name"
+}
+
+variable "private_dns_zone_vnet_link" {
+  type = string
+  description = "name of private dns virtual network link name"
+}
+
+variable "private_dns_a_record" {
+  type = string
+  description = "name of private dns virtual network link name"
+}
+  
 
 
 
