@@ -147,28 +147,28 @@ resource "azurerm_windows_virtual_machine" "VMs" {
   depends_on = [ azurerm_network_interface.subnet_nic , data.azurerm_key_vault_secret.vm_admin_password , data.azurerm_key_vault_secret.vm_admin_username]
 }
 
-# Creates the route table
-resource "azurerm_route_table" "route_table" {
-  name                = "shahrukh2"
-  resource_group_name = azurerm_resource_group.shahrukh2.name
-  location = azurerm_resource_group.shahrukh2.location
-  depends_on = [ azurerm_resource_group.shahrukh2 , azurerm_subnet.subnet ]
-}
+# # Creates the route table
+# resource "azurerm_route_table" "route_table" {
+#   name                = "shahrukh2"
+#   resource_group_name = azurerm_resource_group.shahrukh2.name
+#   location = azurerm_resource_group.shahrukh2.location
+#   depends_on = [ azurerm_resource_group.shahrukh2 , azurerm_subnet.subnet ]
+# }
 
-# Creates the route in the route table (OnPrem-Firewall-Spoke)
-resource "azurerm_route" "route001" {
-  name                   = "onpremises"
-  resource_group_name = azurerm_resource_group.shahrukh2.name
-  route_table_name = azurerm_route_table.route_table.name
-  address_prefix = "10.20.0.0/16"     # destnation network address space
-  next_hop_type      = "VirtualNetworkGateway" 
-  depends_on = [ azurerm_route_table.route_table ]
-}
+# # Creates the route in the route table (OnPrem-Firewall-Spoke)
+# resource "azurerm_route" "route001" {
+#   name                   = "onpremises"
+#   resource_group_name = azurerm_resource_group.shahrukh2.name
+#   route_table_name = azurerm_route_table.route_table.name
+#   address_prefix = "10.20.0.0/16"     # destnation network address space
+#   next_hop_type      = "VirtualNetworkGateway" 
+#   depends_on = [ azurerm_route_table.route_table ]
+# }
 
-# Associate the route table with their subnet
-resource "azurerm_subnet_route_table_association" "RT-ass" {
-   subnet_id                 = azurerm_subnet.subnet["shahrukh2subnet001"].id
-   route_table_id = azurerm_route_table.route_table.id
-   depends_on = [ azurerm_subnet.subnet , azurerm_route_table.route_table ]
-}
+# # Associate the route table with their subnet
+# resource "azurerm_subnet_route_table_association" "RT-ass" {
+#    subnet_id                 = azurerm_subnet.subnet["shahrukh2subnet001"].id
+#    route_table_id = azurerm_route_table.route_table.id
+#    depends_on = [ azurerm_subnet.subnet , azurerm_route_table.route_table ]
+# }
  

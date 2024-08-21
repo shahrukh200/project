@@ -4,10 +4,11 @@ resource "azurerm_resource_group" "spk2" {
 }
 
 # create the vnet with address space
-resource "azurerm_virtual_network" "spk2vnet001" {                
-    name = each.value.vnet_details
+
+resource "azurerm_virtual_network" "vnet001" {                
+    name = each.value.vnet_name
     for_each = var.vnet_details
-    address_space = [each.value.virtual_network_address_space]
+    address_space = [each.value.address_space]
     resource_group_name = azurerm_resource_group.spk2.name
     location = azurerm_resource_group.spk2.location
     depends_on = [ azurerm_resource_group.spk2 ]
@@ -17,11 +18,11 @@ resource "azurerm_virtual_network" "spk2vnet001" {
 
 resource "azurerm_subnet""subnet" {                        
   for_each = var.subnet_details
-  name = each.value.key
+  name = each.key
   address_prefixes = [each.value.address_prefix]
-  virtual_network_name = azurerm_virtual_network.spk2vnet001["spk2vnet001"].name
+  virtual_network_name = azurerm_virtual_network.vnet001["Spk2_vnet001"].name
   resource_group_name = azurerm_resource_group.spk2.name
-  depends_on = [ azurerm_resource_group.spk2 , azurerm_virtual_network.spk2vnet001 ]
+  depends_on = [ azurerm_resource_group.spk2 , azurerm_virtual_network.vnet001 ]
 }
 
 // Network Security Group => Nsg with rules
@@ -33,8 +34,10 @@ resource "azurerm_network_security_group" "nsg" {
   location = azurerm_resource_group.spk2.location 
   
        dynamic "security_rule" {
+
         for_each = { for rule in local.rules_csv: rule.name => rule }
     content {
+
       name                       = security_rule.value.name
       priority                   = security_rule.value.priority
       direction                  = security_rule.value.direction
@@ -82,7 +85,7 @@ resource "azurerm_application_gateway" "appgw" {
  
   gateway_ip_configuration {
     name      = "spk2"
-    subnet_id = azurerm_subnet.subnet["spk2-subnet001"].id
+    subnet_id = azurerm_subnet.subnet["subnet001"].id
   }
  
   frontend_ip_configuration {

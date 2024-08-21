@@ -80,7 +80,7 @@ variable "resource_group_location" {
 variable "vnet_details" {
     type = map(object({
     vnet_name =string
-    address_prefix=string 
+    address_space=string 
   }))
   description = "detials of the vnet"
   
