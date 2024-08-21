@@ -73,8 +73,8 @@ resource "azurerm_firewall" "firewall001" {
 
   ip_configuration {
     name                 = "firewallconfiguration"
-    subnet_id            = azurerm_subnet.subnet["fwsubnet001"].id
-    public_ip_address_id = azurerm_public_ip.public_ip["fwsubnet001"].id
+    subnet_id            = azurerm_subnet.subnet["AzureFirewallSubnet"].id
+    public_ip_address_id = azurerm_public_ip.public_ip["AzureFirewallSubnet"].id
   }
    firewall_policy_id = azurerm_firewall_policy.firewall_policy.id
   depends_on = [ azurerm_resource_group.shahub , azurerm_public_ip.public_ips , 
@@ -109,7 +109,7 @@ nat_rule_collection{
     name = "allow-rdp"
     source_addresses = ["49.37.209.34"]
     destination_ports = ["3389"]
-    destination_address = azurerm_public_ip.public_ips["fwsubnet001"].ip_address
+    destination_address = azurerm_public_ip.public_ips["AzureFirewallSubnet"].ip_address
   translated_address = "10.100.2.4"   # destination VM IP
       translated_port    = "3389"
       protocols         = ["TCP"]
@@ -190,9 +190,9 @@ resource "azurerm_virtual_network_gateway" "gateway" {
  
   ip_configuration {
     name                = "vnetGatewayConfi"
-    public_ip_address_id = azurerm_public_ip.public_ips["gwsubnet002"].id
+    public_ip_address_id = azurerm_public_ip.public_ips["GatewaySubnet"].id
     private_ip_address_allocation = "Dynamic"
-    subnet_id = azurerm_subnet.subnet["gwsubnet002"].id
+    subnet_id = azurerm_subnet.subnet["GatewaySubnet"].id
   }
   depends_on = [ azurerm_resource_group.shahub , azurerm_public_ip.public_ip , azurerm_subnet.subnet]
 }
@@ -265,7 +265,7 @@ resource "azurerm_route" "route002" {
 # Associate the route table with the their subnet
 
 resource "azurerm_subnet_route_table_association" "RT-association" {
-   subnet_id                 = azurerm_subnet.subnet["gwsubnet002"].id
+   subnet_id                 = azurerm_subnet.subnet["GatewaySubnet"].id
    route_table_id = azurerm_route_table.route_table.id
   depends_on = [ azurerm_subnet.subnet , azurerm_route_table.route_table ]
 }
