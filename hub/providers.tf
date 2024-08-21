@@ -11,7 +11,7 @@ terraform {
     resource_group_name  = "shahrukh_resource_group"
     storage_account_name = "storageaccountms0121"
     container_name       = "backend-file"
-    key                  = "spk1.tfstate"
+    key                  = "hub.tfstate"
 
 
   }

@@ -55,12 +55,12 @@ resource "azurerm_network_security_group" "nsg" {
 
 # associate the nsg for their subnets
 
-resource "azurerm_subnet_network_security_group_association" "nsg_association" {
-  for_each = {for id, nsg in azurerm_network_security_group.nsg : id => nsg.id}
-  network_security_group_id = each.value
-  subnet_id = azurerm_subnet.subnet[each.key].id
-  depends_on = [ azurerm_subnet.subnet, azurerm_network_security_group.nsg ]
-}
+# resource "azurerm_subnet_network_security_group_association" "nsg_association" {
+#   for_each = {for id, nsg in azurerm_network_security_group.nsg : id => nsg.id}
+#   network_security_group_id = each.value
+#   subnet_id = azurerm_subnet.subnet[each.key].id
+#   depends_on = [ azurerm_subnet.subnet, azurerm_network_security_group.nsg ]
+# }
 
 # create the public ip for application gateway
 

@@ -56,6 +56,7 @@ resource "azurerm_network_security_group" "nsg" {
   depends_on = [ azurerm_subnet.subnet ]
 }
 //nsg for subnets
+
 resource "azurerm_subnet_network_security_group_association" "nsg_association" {
   for_each = {for id,subnet in azurerm_subnet.subnet  : id => subnet.id}
   subnet_id = each.value
@@ -113,7 +114,7 @@ resource "azurerm_key_vault_secret" "vm_admin_username" {
   name         = "username001"
   value        = var.admin_username
   key_vault_id = azurerm_key_vault.Key_vault.id
-  depends_on = [ azurerm_key_vault.Key_vault ]
+  depends_on = [azurerm_key_vault.Key_vault]
 }
 
 resource "azurerm_key_vault_secret" "vm_admin_password" {
@@ -161,7 +162,7 @@ depends_on = [ azurerm_resource_group.spk1, azurerm_subnet.subnet, azurerm_netwo
 
 // storage account file share
 
-resource "azurerm_storage_account" "stg-act" {
+resource "azurerm_storage_account" "storageaccountms0121" {
   name = var.storage_account_name
   resource_group_name = azurerm_resource_group.spk1.name
   location = azurerm_resource_group.spk1.location
@@ -172,12 +173,13 @@ resource "azurerm_storage_account" "stg-act" {
 }
 
 //fileshare in storage account
+
 resource "azurerm_storage_share" "fileshare" {
   name                 = var.file_share_name
-  storage_account_name = azurerm_storage_account.stg-act.name
+  storage_account_name = azurerm_storage_account.storageaccountms0121.name
   quota                = 10
 
-  depends_on = [ azurerm_resource_group.spk1, azurerm_storage_account.stg-act ]
+  depends_on = [ azurerm_resource_group.spk1, azurerm_storage_account.storageaccountms0121 ]
 }
 
 // mount fileshare to vm
@@ -201,6 +203,7 @@ resource "azurerm_virtual_machine_extension" "vm-mount" {
 
 
 # Create data disk
+
 resource "azurerm_managed_disk" "data_disk" {
   name                 = var.data_disk_name
   resource_group_name = azurerm_resource_group.spk1.name
@@ -212,6 +215,7 @@ resource "azurerm_managed_disk" "data_disk" {
 }
 
 # Attach the data disk to the virtual machine
+
 resource "azurerm_virtual_machine_data_disk_attachment" "Attach" {
   managed_disk_id    = azurerm_managed_disk.data_disk.id
   virtual_machine_id = azurerm_windows_virtual_machine.spk1vm["subnet001"].id
@@ -220,13 +224,15 @@ resource "azurerm_virtual_machine_data_disk_attachment" "Attach" {
   depends_on = [ azurerm_windows_virtual_machine.spk1vm , azurerm_managed_disk.data_disk ]
 }
 
-# Fetch the data from Hub Virtual Network for peering the Spoke_01 Virtual Network (Spoke_01 <--> Hub)
+# #Fetch the data from Hub Virtual Network for peering the Spoke_01 Virtual Network (Spoke_01 <--> Hub)
+
 # data "azurerm_virtual_network" "Hub_vnet" {
 #   name = "Hub_vnet"
 #   resource_group_name = "spk1"
 # }
 
 # # Establish the Peering between Spoke_01 and Hub networks (Spoke_01 <--> Hub)
+
 # resource "azurerm_virtual_network_peering" "spk1-To-Hub" {
 #   name                      = "Spk1-To-Hub"
 #   resource_group_name       = azurerm_virtual_network.spk1vnet001["spk1venet001"].resource_group_name
@@ -240,6 +246,7 @@ resource "azurerm_virtual_machine_data_disk_attachment" "Attach" {
 # }
 
 # # Establish the Peering between and Hub Spoke_01 networks (Hub <--> Spoke_01)
+
 # resource "azurerm_virtual_network_peering" "Hub-Spk1" {
 #   name                      = "Hub-Spk1"
 #   resource_group_name       = data.azurerm_virtual_network.Hub_vnet.resource_group_name
@@ -253,13 +260,13 @@ resource "azurerm_virtual_machine_data_disk_attachment" "Attach" {
 # }
 
 
-# Creates the policy definition
+# #Creates the policy definition
 
-# resource "azurerm_policy_definition" "rg_policy_def" {
-#   name         = "Spk1_rg-policy"
+# resource "azurerm_policy_definition" "resource_group_policy_def" {
+#   name         = "Spk1_resource_group_policy"
 #   policy_type  = "Custom"
 #   mode         = "All"
-#   display_name = "Spk1 Policy"
+#   display_name = "Spk1-Policy"
 #   description  = "A policy to demonstrate resource group level policy."
  
 #   policy_rule = <<POLICY_RULE
@@ -282,15 +289,17 @@ resource "azurerm_virtual_machine_data_disk_attachment" "Attach" {
 # }
  
 # # Assign the policy
+
 # resource "azurerm_policy_assignment" "example" {
-#   name                 = "Spk1-rg-policy-assignment"
-#   policy_definition_id = azurerm_policy_definition.rg_policy_def.id
+#   name                 = "spk1"
+#   policy_definition_id = azurerm_policy_definition.respolicy_def.id
 #   scope                = azurerm_resource_group.Spk1["Spk1"].id
 #   display_name         = "Spk1 Policy Assignment"
 #   description          = "Assigning policy to the resource group"
 # }
 
-# # Creates the Log Analytics workspace 
+# # Creates the Log Analytics workspace
+
 # resource "azurerm_log_analytics_workspace" "log_analytics" {
 #   name                = "example-law"
 #   resource_group_name = azurerm_resource_group.Spk1.name
@@ -300,6 +309,7 @@ resource "azurerm_virtual_machine_data_disk_attachment" "Attach" {
 # }
 
 # # 
+
 # resource "azurerm_monitor_diagnostic_setting" "vnet_monitor" {
 #   name               = "diag-settings-vnet"
 #   target_resource_id = azurerm_virtual_network.spk["Spk1vnet001"].id
@@ -341,6 +351,7 @@ resource "azurerm_virtual_machine_data_disk_attachment" "Attach" {
 
 
 # # Create Recovery Services Vault
+
 # resource "azurerm_recovery_services_vault" "vault" {
 #   name                = "exampleRecoveryServicesVault"
 #   location            = azurerm_resource_group.spk1.location
@@ -349,6 +360,7 @@ resource "azurerm_virtual_machine_data_disk_attachment" "Attach" {
 # }
  
 # # Create Backup Policy
+
 # resource "azurerm_backup_policy_vm" "backup_policy" {
 #   name                = "exampleBackupPolicy"
 #   resource_group_name = azurerm_resource_group.spk1.name
@@ -365,6 +377,7 @@ resource "azurerm_virtual_machine_data_disk_attachment" "Attach" {
 # }
  
 # # Enable Backup for VM
+
 # resource "azurerm_backup_protected_vm" "protected_vm" {
 #   resource_group_name    = azurerm_resource_group.spk1.name
 #   recovery_vault_name    = azurerm_recovery_services_vault.vault.name

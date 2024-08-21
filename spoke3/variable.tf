@@ -34,11 +34,7 @@ variable "subnet_details" {
   description = "details of the subnets"
   
 }
-variable "app_service_plan_name" {
-  type = string
-  default = "name of app service plan"
-  
-}
+
 
 variable "web_app_name" {
   type = string

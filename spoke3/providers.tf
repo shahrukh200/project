@@ -7,14 +7,13 @@ terraform {
   }
   required_version = ">= 1.1.0"
 
-  backend "azurerm" {
+ backend "azurerm" {
     resource_group_name  = "shahrukh_resource_group"
-    storage_account_name = "storageacc1ountms0121"
-    container_name       = "backend-files"
+    storage_account_name = "storageaccountms0121"
+    container_name       = "backend-file"
     key                  = "spk1.tfstate"
-
-
   }
+  
 }
 provider "azurerm" {
   features {}

@@ -4,6 +4,7 @@ resource "azurerm_resource_group" "shahrukh2" {
 }
 
 # Create the Virtual Network with address space
+
 resource "azurerm_virtual_network" "shahrukh2_vnet" {
     for_each = var.vnet_details
     name = each.value.vnet_name
@@ -14,16 +15,18 @@ resource "azurerm_virtual_network" "shahrukh2_vnet" {
 }
 
 # Create the Subnets with address prefixes
+
 resource "azurerm_subnet" "subnet" {
   for_each = var.subnet_details
   name = each.key
   address_prefixes = [each.value.address_prefix]
-  virtual_network_name = azurerm_virtual_network.shahrukh2_vnet["shahrukh2_vnet"].name
+  virtual_network_name = azurerm_virtual_network.shahrukh2_vnet["vnet001"].name
   resource_group_name = azurerm_resource_group.shahrukh2.name
   depends_on = [ azurerm_virtual_network.shahrukh2_vnet]
 }
 
 # Create the Public IP for VPN Gateway 
+
 resource "azurerm_public_ip" "public_ips" {
   name = "shahrukh2-VPN-${azurerm_subnet.subnet["GatewaySubnet"].name}-IP"
   location            = azurerm_resource_group.shahrukh2.location
@@ -34,6 +37,7 @@ resource "azurerm_public_ip" "public_ips" {
 }
 
 # Create the VPN Gateway in their Specified Subnet
+
 resource "azurerm_virtual_network_gateway" "gateway" {
   name                = "shahrukh-VPN-gateway"
   location            = azurerm_resource_group.shahrukh2.location
@@ -49,24 +53,26 @@ resource "azurerm_virtual_network_gateway" "gateway" {
     name                = "shahrukh2"
     public_ip_address_id = azurerm_public_ip.public_ips.id
     private_ip_address_allocation = "Dynamic"
-    subnet_id = azurerm_subnet.subnet["shahrukh2"].id
+    subnet_id = azurerm_subnet.subnet["GatewaySubnet"].id
   }
   depends_on = [ azurerm_resource_group.shahrukh2 , azurerm_public_ip.public_ips , azurerm_subnet.subnet ]
 }
 
 
 data "azurerm_public_ip" "Hub-VPN-GW-public-ip" {
-  name = "shahrukh2-IP"
-  resource_group_name = "shahrukh2"
+name = "shahrukh2-IP"
+resource_group_name = "shahrukh2"
 }
 
-# Fetch the data from Hub Virtual Network (address_space)
+#Fetch the data from Hub Virtual Network (address_space)
+
 data "azurerm_virtual_network" "shahrukh" {
   name = "shahrukh2"
   resource_group_name = "shahrukh2"
 }
 
 # Create the Local Network Gateway for VPN Gateway
+
 resource "azurerm_local_network_gateway" "shahrukh2" {
   name                = "shahrukh2"
   location            = azurerm_resource_group.shahrukh2.location
@@ -77,6 +83,7 @@ resource "azurerm_local_network_gateway" "shahrukh2" {
 }
 
 # Create the VPN-Connection for Connecting the Networks
+
 resource "azurerm_virtual_network_gateway_connection" "vpn_connection" {
   name                = "OnPremises-Hub-vpn-connection"
   location            = azurerm_resource_group.shahrukh2["on_premises_shahrukh2"].location
@@ -124,6 +131,7 @@ data "azurerm_key_vault_secret" "vm_admin_password" {
 }
 
 # Create the Virtual Machines(VM) and assign the NIC to specific VM
+
 resource "azurerm_windows_virtual_machine" "VMs" {
   name = "shahrukh2"
   resource_group_name = azurerm_resource_group.shahrukh2.name
@@ -147,28 +155,31 @@ resource "azurerm_windows_virtual_machine" "VMs" {
   depends_on = [ azurerm_network_interface.subnet_nic , data.azurerm_key_vault_secret.vm_admin_password , data.azurerm_key_vault_secret.vm_admin_username]
 }
 
-# # Creates the route table
-# resource "azurerm_route_table" "route_table" {
-#   name                = "shahrukh2"
-#   resource_group_name = azurerm_resource_group.shahrukh2.name
-#   location = azurerm_resource_group.shahrukh2.location
-#   depends_on = [ azurerm_resource_group.shahrukh2 , azurerm_subnet.subnet ]
-# }
+# Creates the route table
 
-# # Creates the route in the route table (OnPrem-Firewall-Spoke)
-# resource "azurerm_route" "route001" {
-#   name                   = "onpremises"
-#   resource_group_name = azurerm_resource_group.shahrukh2.name
-#   route_table_name = azurerm_route_table.route_table.name
-#   address_prefix = "10.20.0.0/16"     # destnation network address space
-#   next_hop_type      = "VirtualNetworkGateway" 
-#   depends_on = [ azurerm_route_table.route_table ]
-# }
+resource "azurerm_route_table" "route_table" {
+  name                = "shahrukh2"
+  resource_group_name = azurerm_resource_group.shahrukh2.name
+  location = azurerm_resource_group.shahrukh2.location
+  depends_on = [ azurerm_resource_group.shahrukh2 , azurerm_subnet.subnet ]
+}
 
-# # Associate the route table with their subnet
-# resource "azurerm_subnet_route_table_association" "RT-ass" {
-#    subnet_id                 = azurerm_subnet.subnet["shahrukh2subnet001"].id
-#    route_table_id = azurerm_route_table.route_table.id
-#    depends_on = [ azurerm_subnet.subnet , azurerm_route_table.route_table ]
-# }
+# Creates the route in the route table (OnPrem-Firewall-Spoke)
+
+resource "azurerm_route" "route001" {
+  name                   = "onpremises"
+  resource_group_name = azurerm_resource_group.shahrukh2.name
+  route_table_name = azurerm_route_table.route_table.name
+  address_prefix = "10.3.0.0/16"     
+  next_hop_type      = "VirtualNetworkGateway" 
+  depends_on = [ azurerm_route_table.route_table ]
+}
+
+# Associate the route table with their subnet
+
+resource "azurerm_subnet_route_table_association" "RT-ass" {
+   subnet_id                 = azurerm_subnet.subnet["GatewaySubnet"].id
+   route_table_id = azurerm_route_table.route_table.id
+   depends_on = [ azurerm_subnet.subnet , azurerm_route_table.route_table ]
+}
  
