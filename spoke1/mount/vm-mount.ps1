@@ -1,5 +1,5 @@
 
-$storageAccountName = "storageaccount001"
+$storageAccountName = "stgaccount121"
 $shareName = "fileshare001"
 $storageAccountKey = "${azurerm_storage_account.storage-account.primary_access_key}"
 

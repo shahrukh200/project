@@ -38,6 +38,7 @@ resource "azurerm_subnet" "subnet" {
 
  
 # Create an App Service Plan
+
 resource "azurerm_app_service_plan" "appplan" {
   name                = "app_service_plan_name"
   location            = azurerm_resource_group.Spk3.location
@@ -50,6 +51,7 @@ resource "azurerm_app_service_plan" "appplan" {
 }
 
 # Create the Web App
+
 resource "azurerm_app_service" "webapplication" {
   name                = var.web_app_name
   location            = azurerm_resource_group.Spk3.location
@@ -61,6 +63,7 @@ resource "azurerm_app_service" "webapplication" {
 }
 
 # Enable the Virtual Network Integration to App services
+
 resource "azurerm_app_service_virtual_network_swift_connection" "vent001" {
   app_service_id = azurerm_app_service.webapplication.id
   subnet_id = azurerm_subnet.subnet["spk3subnet001"].id

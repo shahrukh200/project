@@ -144,7 +144,7 @@ resource "azurerm_virtual_network_gateway" "gateway" {
     private_ip_address_allocation = "Dynamic"
     subnet_id = azurerm_subnet.subnet["GatewaySubnet"].id
   }
-  depends_on = [ azurerm_resource_group.shahub , azurerm_public_ip.public_ip , azurerm_subnet.subnet]
+  depends_on = [ azurerm_resource_group.shahub , azurerm_public_ip.public_ips , azurerm_subnet.subnet]
 }
 
 # Fetch the data from On_premises Gateway Public_IP (IP_address)

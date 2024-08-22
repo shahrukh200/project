@@ -59,16 +59,16 @@ resource "azurerm_virtual_network_gateway" "gateway" {
 }
 
 
-data "azurerm_public_ip" "Hub-VPN-GW-public-ip" {
-name = "shahrukh2-IP"
-resource_group_name = "shahrukh2"
+data "azurerm_public_ip" "public_ips" {
+name = "GatewaySubnet-ip"
+resource_group_name = "shahub"
 }
 
 #Fetch the data from Hub Virtual Network (address_space)
 
-data "azurerm_virtual_network" "shahrukh" {
-  name = "shahrukh2"
-  resource_group_name = "shahrukh2"
+data "azurerm_virtual_network" "vnet001" {
+  name = "vnet001"
+  resource_group_name = "shahub"
 }
 
 # Create the Local Network Gateway for VPN Gateway
@@ -77,19 +77,19 @@ resource "azurerm_local_network_gateway" "shahrukh2" {
   name                = "shahrukh2"
   location            = azurerm_resource_group.shahrukh2.location
   resource_group_name = azurerm_resource_group.shahrukh2.name
-  gateway_address     = data.azurerm_public_ip.Hub-VPN-GW-public-ip
-  address_space       = [data.azurerm_virtual_network.shahrukh.address_space[0]]
-  depends_on = [ azurerm_public_ip.public_ips , azurerm_virtual_network_gateway.gateway , data.azurerm_public_ip.Hub-VPN-GW-public-ip , data.azurerm_virtual_network.Hub_vnet ]
+  gateway_address     = data.azurerm_public_ip.public_ips.ip_address
+  address_space       = [data.azurerm_virtual_network.vnet001.address_space[0]]
+  depends_on = [ azurerm_public_ip.public_ips , azurerm_virtual_network_gateway.gateway , data.azurerm_public_ip.public_ips , data.azurerm_virtual_network.vnet001 ]
 }
 
 # Create the VPN-Connection for Connecting the Networks
 
 resource "azurerm_virtual_network_gateway_connection" "vpn_connection" {
   name                = "OnPremises-Hub-vpn-connection"
-  location            = azurerm_resource_group.shahrukh2["on_premises_shahrukh2"].location
-  resource_group_name = azurerm_resource_group.shahrukh2["On_Premises_shahrukh2"].name
+  location            = azurerm_resource_group.shahrukh2.location
+  resource_group_name = azurerm_resource_group.shahrukh2.name
   virtual_network_gateway_id     = azurerm_virtual_network_gateway.gateway.id
-  local_network_gateway_id       = azurerm_local_network_gateway.OnPremises_local_gateway.id
+  local_network_gateway_id       = azurerm_local_network_gateway.shahrukh2.id
   type                           = "IPsec"
   connection_protocol            = "IKEv2"
   shared_key                     = "YourSharedKey"
@@ -100,33 +100,34 @@ resource "azurerm_virtual_network_gateway_connection" "vpn_connection" {
 # Create the Network Interface card for Virtual Machines
 
 resource "azurerm_network_interface" "subnet_nic" {
-  name                = "DB-NIC"
+  name                = "sub-nic"
   resource_group_name = azurerm_resource_group.shahrukh2.name
   location = azurerm_resource_group.shahrukh2.location
 
   ip_configuration {
     name                          = "internal"
-    subnet_id                     = azurerm_subnet.subnet["shahrukh2_Subnet001"].id
+    subnet_id                     = azurerm_subnet.subnet["onpremisessubnet002"].id
     private_ip_address_allocation = "Dynamic"
   }
   depends_on = [ azurerm_virtual_network.shahrukh2_vnet , azurerm_subnet.subnet ]
 }
 
 # Fetch the data from key vault
+
 data "azurerm_key_vault" "Key_vault" {
-  name                = "MyKeyVault1603"
+  name                = "keyvault001"
   resource_group_name = "Spk1"
 }
 
 # Get the username from key vault secret store
 data "azurerm_key_vault_secret" "vm_admin_username" {
-  name         = "Spokevmvirtualmachineusername"
+  name         = "username001"
   key_vault_id = data.azurerm_key_vault.Key_vault.id
 }
 
 # Get the password from key vault secret store
 data "azurerm_key_vault_secret" "vm_admin_password" {
-  name         = "Spokevmvirtualmachinepassword"
+  name         = "password001"
   key_vault_id = data.azurerm_key_vault.Key_vault.id
 }
 
