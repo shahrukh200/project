@@ -34,23 +34,13 @@ resource "azurerm_public_ip" "public_ips" {
   name = "${each.key}-ip"
   location = azurerm_resource_group.shahub.location
   resource_group_name = azurerm_resource_group.shahub.name
-allocation_method = "Static"
-sku = "Standard"
-depends_on = [ azurerm_resource_group.shahub ]
+  allocation_method = "Static"
+  sku = "Standard"
+  depends_on = [ azurerm_resource_group.shahub ]
 
 }
 
-# create the public ip for azure firewall, vpn gateway and azure bastion host
 
-resource "azurerm_public_ip" "public_ip" {
-  for_each = toset(local.subnet_names)
-  name = "${each.key}-IP"
-  location            = azurerm_resource_group.shahub.location
-  resource_group_name = azurerm_resource_group.shahub.name
-  allocation_method   = "Static"
-  sku                 = "Standard"
-  depends_on = [ azurerm_resource_group.shahub]
-}
 
 # create the azure firewall policy
 
@@ -74,7 +64,7 @@ resource "azurerm_firewall" "firewall001" {
   ip_configuration {
     name                 = "firewallconfiguration"
     subnet_id            = azurerm_subnet.subnet["AzureFirewallSubnet"].id
-    public_ip_address_id = azurerm_public_ip.public_ip["AzureFirewallSubnet"].id
+    public_ip_address_id = azurerm_public_ip.public_ips["AzureFirewallSubnet"].id
   }
    firewall_policy_id = azurerm_firewall_policy.firewall_policy.id
   depends_on = [ azurerm_resource_group.shahub , azurerm_public_ip.public_ips , 
@@ -107,10 +97,10 @@ nat_rule_collection{
 
   rule {
     name = "allow-rdp"
-    source_addresses = ["49.37.209.34"]
+    source_addresses = [" 192.168.0.1"]
     destination_ports = ["3389"]
     destination_address = azurerm_public_ip.public_ips["AzureFirewallSubnet"].ip_address
-  translated_address = "10.100.2.4"   # destination VM IP
+  translated_address = "10.100.2.4"   
       translated_port    = "3389"
       protocols         = ["TCP"]
     }
@@ -125,53 +115,13 @@ nat_rule_collection{
 
     rule {
       name = "allow-spokes"
-      source_addresses = [ "10.3.0.0/16" ]     # OnPremises network address
-      destination_addresses = [ "10.1.0.0/16" ] # Spoke network address
-      # destination_ip_groups = [ azurerm_ip_group.Ip_group.id ] # All Spoke network addresses
-      
+      source_addresses = [ "10.1.0.0/16" ]    
+      destination_addresses = [ "10.3.0.0/16" ] 
       destination_ports = [ "*" ]
       protocols = [ "Any" ]
     }
- 
-    rule {
-      name                  = "allow-spokes-Http"
-      #description           = "Allow DNS"
-      #rule_type             = "NetworkRule"
-      source_addresses      = ["10.1.0.0/16"]
-      destination_ip_groups = [azurerm_ip_group.Ip_group.id]
-      destination_ports     = ["80"]
-      protocols             = ["UDP", "TCP"]
-    }
-    # rule {
-    #   name = "allow-spokes_RDP"
-    #   source_addresses      = ["10.1.1.0/24"]
-    #   destination_addresses = ["10.3.1.0/24" ]
-    #   #destination_ip_groups  = [azurerm_ip_group.Ip_group.id]
-    #   destination_ports     = ["3389"]
-    #   protocols             = ["TCP"]
-    # }
   }
- 
-  application_rule_collection {       # Create the Application rule collection
-    name     = "application-rule-collection"
-    priority = 300
-    action   = "Allow"
- 
-    rule {
-      name             = "allow-web"
-      description      = "Allow-Web-Access"
-      source_addresses = ["10.20.1.4"]  # Allow website only from [10.20.1.4]
-      protocols {
-        type = "Http"
-        port = 80
-      }
-      protocols {
-        type = "Https"
-        port = 443
-      } 
-      destination_fqdns = ["*.microsoft.com"]  
-    }
-  } 
+
   depends_on = [ azurerm_firewall.firewall001 , azurerm_ip_group.Ip_group ]
 }
 
