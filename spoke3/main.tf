@@ -71,74 +71,41 @@ resource "azurerm_app_service_virtual_network_swift_connection" "vent001" {
 }
 
 
-# # Fetch the Subnet details from Hub Network
-# data "azurerm_subnet" "appService_subnet" {
-#   name = "AppServiceSubnet"
-#   resource_group_name = "spk3"
-#   virtual_network_name = "vent001"
-  
-# }
 
-# #establish the peering between spk1 & hub networks(spoke3-hub)
-
-# resource "azurerm_virtual_network_peering" "Spoke_03-To-Hub" {
-#   name                      = "Spk3-to-hub"
-#   resource_group_name       = azurerm_virtual_network.Spk3["spk3vnet"].azurerm_resource_group.name
-#   virtual_network_name      = azurerm_virtual_network.Spk3["spk3vnet"].name
-#   remote_virtual_network_id = data.azurerm_virtual_network.Hub_vnet.id
-#   allow_virtual_network_access = true
-#   allow_forwarded_traffic   = true
-#   allow_gateway_transit     = false
-#   use_remote_gateways       = false
-#   depends_on = [ azurerm_virtual_network.Spk3 , data.azurerm_virtual_network.Hub_vnet ]
-# }
-
-# # Establish the Peering between and Hub Spoke1 networks (Hub-Spoke_03)
-# resource "azurerm_virtual_network_peering" "Hub-Spk3" {
-#   name                      = "Hub-Spk3"
-#   resource_group_name       = data.azurerm_virtual_network.Hub_vnet.resource_group_name
-#   virtual_network_name      = data.azurerm_virtual_network.Hub_vnet.name
-#   remote_virtual_network_id = azurerm_virtual_network.spk3vnet["spk3vnet"].id
-#   allow_virtual_network_access = true
-#   allow_forwarded_traffic   = true
-#   allow_gateway_transit     = true
-#   use_remote_gateways       = false
-#   depends_on = [ azurerm_virtual_network.Spk3 , data.azurerm_virtual_network.Hub_vnet ]
-# }
+data "azurerm_virtual_network" "vnet001" {
+  name = "vnet001"
+  resource_group_name = "hub1"
+}
 
 
-# # Creates the policy definition
-# resource "azurerm_policy_definition" "rg_policy_def" {
-#   name         = "Spk3_rg-policy"
-#   policy_type  = "Custom"
-#   mode         = "All"
-#   display_name = "Spk3 Policy"
-#   description  = "A policy to demonstrate resource group level policy."
- 
-#   policy_rule = <<POLICY_RULE
-#   {
-#     "if": {
-#       "field": "location",
-#       "equals": "uk south"
-#     },
-#     "then": {
-#       "effect": "deny"
-#     }
-#   }
-#   POLICY_RULE
- 
-#   metadata = <<METADATA
-#   {
-#     "category": "General"
-#   }
-#   METADATA
-# }
- 
-# # Assign the policy
-# resource "azurerm_policy_assignment" "example" {
-#   name                 = "Spk3-rg-policy-assignment"
-#   policy_definition_id = azurerm_policy_definition.rg_policy_def.id
-#   scope                = azurerm_resource_group.Spk3.id
-#   display_name         = "Spk3_RG Policy Assignment"
-#   description          = "Assigning policy to the resource group"
-# }
+#establish the peering between spk1 & hub networks(spoke3-hub)
+
+
+resource "azurerm_virtual_network_peering" "Spk3-To-hub1" {
+  name                      = "Spk3-to-hub"
+  resource_group_name       = azurerm_virtual_network.Spk3["spk3vnet001"].resource_group_name
+  virtual_network_name      = azurerm_virtual_network.Spk3["spk3vnet001"].name
+  remote_virtual_network_id = data.azurerm_virtual_network.vnet001.id
+  allow_virtual_network_access = true
+  allow_forwarded_traffic   = true
+  allow_gateway_transit     = false
+  use_remote_gateways       = false
+  depends_on = [ azurerm_virtual_network.Spk3 , data.azurerm_virtual_network.vnet001 ]
+}
+
+# Establish the Peering between and Hub Spoke1 networks (Hub-Spoke_03)
+
+
+resource "azurerm_virtual_network_peering" "Hub-Spk3" {
+  name                      = "Hub-Spk3"
+  resource_group_name       = data.azurerm_virtual_network.vnet001.resource_group_name
+  virtual_network_name      = data.azurerm_virtual_network.vnet001.name
+  remote_virtual_network_id = azurerm_virtual_network.Spk3["spk3vnet001"].id
+  allow_virtual_network_access = true
+  allow_forwarded_traffic   = true
+  allow_gateway_transit     = true
+  use_remote_gateways       = false
+  depends_on = [ azurerm_virtual_network.Spk3 , data.azurerm_virtual_network.vnet001 ]
+}
+
+

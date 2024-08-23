@@ -224,164 +224,39 @@ resource "azurerm_virtual_machine_data_disk_attachment" "Attach" {
   depends_on = [ azurerm_windows_virtual_machine.spk1vm , azurerm_managed_disk.data_disk ]
 }
 
-# #Fetch the data from Hub Virtual Network for peering the Spoke_01 Virtual Network (Spoke_01 <--> Hub)
+#Fetch the data from Hub Virtual Network for peering the Spoke_01 Virtual Network (Spoke_01 <--> Hub)
 
-# data "azurerm_virtual_network" "Hub_vnet" {
-#   name = "Hub_vnet"
-#   resource_group_name = "spk1"
-# }
+data "azurerm_virtual_network" "vnet001" {
+  name = "vnet001"
+  resource_group_name = "hub1"
+}
 
-# # Establish the Peering between Spoke_01 and Hub networks (Spoke_01 <--> Hub)
+# Establish the Peering between Spoke_01 and Hub networks (Spoke_01 <--> Hub)
 
-# resource "azurerm_virtual_network_peering" "spk1-To-Hub" {
-#   name                      = "Spk1-To-Hub"
-#   resource_group_name       = azurerm_virtual_network.spk1vnet001["spk1venet001"].resource_group_name
-#   virtual_network_name      = azurerm_virtual_network.spk1vnet001["spk1venet001"].name
-#   remote_virtual_network_id = data.azurerm_virtual_network.Hub_vnet.id
-#   allow_virtual_network_access = true
-#   allow_forwarded_traffic   = true
-#   allow_gateway_transit     = false
-#   use_remote_gateways       = false
-#   depends_on = [ azurerm_virtual_network.spk1vnet001 , data.azurerm_virtual_network.Hub_vnet]
-# }
+resource "azurerm_virtual_network_peering" "spk1-To-Hub" {
+  name                      = "Spk1-To-Hub"
+  resource_group_name       = azurerm_virtual_network.spk1vnet001["vnet001"].resource_group_name
+  virtual_network_name      = azurerm_virtual_network.spk1vnet001["vnet001"].name
+  remote_virtual_network_id = data.azurerm_virtual_network.vnet001.id
+  allow_virtual_network_access = true
+  allow_forwarded_traffic   = true
+  allow_gateway_transit     = false
+  use_remote_gateways       = false
+  depends_on = [ azurerm_virtual_network.spk1vnet001 , data.azurerm_virtual_network.vnet001]
+}
 
-# # Establish the Peering between and Hub Spoke_01 networks (Hub <--> Spoke_01)
+# Establish the Peering between and Hub Spoke_01 networks (Hub <--> Spoke_01)
 
-# resource "azurerm_virtual_network_peering" "Hub-Spk1" {
-#   name                      = "Hub-Spk1"
-#   resource_group_name       = data.azurerm_virtual_network.Hub_vnet.resource_group_name
-#   virtual_network_name      = data.azurerm_virtual_network.Hub_vnet.name
-#   remote_virtual_network_id = azurerm_virtual_network.spk1vnet001["spk1venet001"].id
-#   allow_virtual_network_access = true
-#   allow_forwarded_traffic   = true
-#   allow_gateway_transit     = true
-#   use_remote_gateways       = false
-#   depends_on = [ azurerm_virtual_network.spk1vnet001 , data.azurerm_virtual_network.Hub_vnet ]
-# }
-
-
-# #Creates the policy definition
-
-# resource "azurerm_policy_definition" "resource_group_policy_def" {
-#   name         = "Spk1_resource_group_policy"
-#   policy_type  = "Custom"
-#   mode         = "All"
-#   display_name = "Spk1-Policy"
-#   description  = "A policy to demonstrate resource group level policy."
- 
-#   policy_rule = <<POLICY_RULE
-#   {
-#     "if": {
-#       "field": "location",
-#       "equals": "uk south"
-#     },
-#     "then": {
-#       "effect": "deny"
-#     }
-#   }
-#   POLICY_RULE
- 
-#   metadata = <<METADATA
-#   {
-#     "category": "General"
-#   }
-#   METADATA
-# }
- 
-# # Assign the policy
-
-# resource "azurerm_policy_assignment" "example" {
-#   name                 = "spk1"
-#   policy_definition_id = azurerm_policy_definition.respolicy_def.id
-#   scope                = azurerm_resource_group.Spk1["Spk1"].id
-#   display_name         = "Spk1 Policy Assignment"
-#   description          = "Assigning policy to the resource group"
-# }
-
-# # Creates the Log Analytics workspace
-
-# resource "azurerm_log_analytics_workspace" "log_analytics" {
-#   name                = "example-law"
-#   resource_group_name = azurerm_resource_group.Spk1.name
-#   location = azurerm_resource_group.Spk1.location
-#   sku                 = "PerGB2018"
-#   retention_in_days   = 10
-# }
-
-# # 
-
-# resource "azurerm_monitor_diagnostic_setting" "vnet_monitor" {
-#   name               = "diag-settings-vnet"
-#   target_resource_id = azurerm_virtual_network.spk["Spk1vnet001"].id
-#   log_analytics_workspace_id = azurerm_log_analytics_workspace.log_analytics.id
- 
-#   log {
-#     category = "NetworkSecurityGroupEvent"
-#     enabled  = true
- 
-#     retention_policy {
-#       enabled = false
-#     }
-#   }
-# }
- 
-# resource "azurerm_monitor_diagnostic_setting" "vm_monitor" {
-#   name               = "diag-settings-vm"
-#   target_resource_id = azurerm_windows_virtual_machine.VM[each.key].id
-#   log_analytics_workspace_id = azurerm_log_analytics_workspace.example.id
- 
-#   log {
-#     category = "GuestOSUpdate"
-#     enabled  = true
- 
-#     retention_policy {
-#       enabled = false
-#     }
-#   }
- 
-#   metric {
-#     category = "AllMetrics"
-#     enabled  = true
- 
-#     retention_policy {
-#       enabled = false
-#     }
-#   }
-# }
+resource "azurerm_virtual_network_peering" "Hub-Spk1" {
+  name                      = "Hub-Spk1"
+  resource_group_name       = data.azurerm_virtual_network.vnet001.resource_group_name
+  virtual_network_name      = data.azurerm_virtual_network.vnet001.name
+  remote_virtual_network_id = azurerm_virtual_network.spk1vnet001["vnet001"].id
+  allow_virtual_network_access = true
+  allow_forwarded_traffic   = true
+  allow_gateway_transit     = true
+  use_remote_gateways       = false
+  depends_on = [ azurerm_virtual_network.spk1vnet001 , data.azurerm_virtual_network.vnet001 ]
+}
 
 
-# # Create Recovery Services Vault
-
-# resource "azurerm_recovery_services_vault" "vault" {
-#   name                = "exampleRecoveryServicesVault"
-#   location            = azurerm_resource_group.spk1.location
-#   resource_group_name = azurerm_resource_group.spk1.name
-#   sku                 = "Standard"
-# }
- 
-# # Create Backup Policy
-
-# resource "azurerm_backup_policy_vm" "backup_policy" {
-#   name                = "exampleBackupPolicy"
-#   resource_group_name = azurerm_resource_group.spk1.name
-#   recovery_vault_name = azurerm_recovery_services_vault.vault.name
- 
-#   retention_daily {
-#     count = 7
-#   }
- 
-#   backup {
-#     frequency = "Daily"
-#     time      = "23:00"
-#   }
-# }
- 
-# # Enable Backup for VM
-
-# resource "azurerm_backup_protected_vm" "protected_vm" {
-#   resource_group_name    = azurerm_resource_group.spk1.name
-#   recovery_vault_name    = azurerm_recovery_services_vault.vault.name
-#   source_vm_id           = azurerm_virtual_machine.vm.id
-#   backup_policy_id       = azurerm_backup_policy_vm.backup_policy.id
-# }
- 

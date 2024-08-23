@@ -101,17 +101,7 @@ variable "rules_file" {
   
 }
 
-variable "admin_username" {
-  type = string
-  default = "adminuser"
-  
-}
-variable "admin_password" {
-  type = string
-  default = "mohamed@s200"
-  sensitive = true
-  
-}
+
 
 
 

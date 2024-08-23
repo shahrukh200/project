@@ -61,14 +61,14 @@ resource "azurerm_virtual_network_gateway" "gateway" {
 
 data "azurerm_public_ip" "public_ips" {
 name = "GatewaySubnet-ip"
-resource_group_name = "shahub"
+resource_group_name = "hub1"
 }
 
 #Fetch the data from Hub Virtual Network (address_space)
 
 data "azurerm_virtual_network" "vnet001" {
   name = "vnet001"
-  resource_group_name = "shahub"
+  resource_group_name = "hub1"
 }
 
 # Create the Local Network Gateway for VPN Gateway
